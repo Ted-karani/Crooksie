@@ -1,23 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Plus, Trash2, Camera, MapPin, Clock, Users, BarChart2, DollarSign, Save, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Camera, MapPin, Clock, Users, BarChart2, DollarSign, Save, ChevronRight, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { recipeService } from '../services/recipeService';
 import { toast } from 'sonner';
 
+// ── OUTSIDE component so they never remount on keystroke ──
+const Section = ({ title, icon, children }) => (
+  <div style={{
+    background: '#fff',
+    borderRadius: 24,
+    padding: '32px',
+    marginBottom: 20,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 32px rgba(251,146,60,0.06)',
+    border: '1px solid rgba(251,146,60,0.1)',
+    position: 'relative',
+    overflow: 'hidden',
+  }}>
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #FB923C, #F97316, #EA580C)' }} />
+    <h2 style={{
+      fontFamily: "'Fraunces', Georgia, serif",
+      fontSize: 20, fontWeight: 600,
+      color: '#1C0A00', margin: '0 0 24px',
+      display: 'flex', alignItems: 'center', gap: 10,
+    }}>
+      {icon && <span style={{ fontSize: 20 }}>{icon}</span>}
+      {title}
+    </h2>
+    {children}
+  </div>
+);
+
+const Label = ({ children }) => (
+  <label style={{
+    display: 'block', fontSize: 11,
+    color: '#92400E',
+    textTransform: 'uppercase', letterSpacing: '0.12em',
+    fontWeight: 700, marginBottom: 7,
+  }}>
+    {children}
+  </label>
+);
+
 const DIETARY = ['Vegan', 'Halal', 'Gluten-free', 'Dairy-free', 'Keto', 'Vegetarian'];
-const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Desserts'];
-const difficulties = ['Easy', 'Medium', 'Hard'];
-const costs = ['Cheap', 'Moderate', 'Expensive'];
+const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Desserts'];
+const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
+const COSTS = ['Cheap', 'Moderate', 'Expensive'];
 
 const inputStyle = {
-  width: '100%', background: '#0D0A07', border: '1px solid rgba(245,237,216,0.08)',
-  borderRadius: 12, padding: '12px 16px', color: '#F5EDD8', fontSize: 14,
-  outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s',
+  width: '100%',
+  background: '#FFFBF7',
+  border: '1.5px solid #FED7AA',
+  borderRadius: 12,
+  padding: '12px 16px',
+  color: '#1C0A00',
+  fontSize: 14,
+  outline: 'none',
+  boxSizing: 'border-box',
+  transition: 'border-color 0.2s, box-shadow 0.2s',
+  fontFamily: "'DM Sans', sans-serif",
 };
 
 const selectStyle = {
-  ...inputStyle, appearance: 'none', cursor: 'pointer',
+  ...inputStyle,
+  appearance: 'none',
+  cursor: 'pointer',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23F97316' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 14px center',
+  paddingRight: 36,
 };
 
 export const PostRecipePage = () => {
@@ -49,7 +100,8 @@ export const PostRecipePage = () => {
       const ex = await recipeService.getRecipeById(id);
       if (ex && ex.user_id === user.id) {
         setTitle(ex.title); setDescription(ex.description);
-        setIngredients(ex.ingredients || ['']); setSteps(ex.steps || ['']);
+        setIngredients(ex.ingredients?.length ? ex.ingredients : ['']);
+        setSteps(ex.steps?.length ? ex.steps : ['']);
         setCountry(ex.country); setCategory(ex.category); setCost(ex.cost);
         setDifficulty(ex.difficulty); setCookTime(ex.cook_time);
         setServings(ex.servings); setDietaryTags(ex.dietary_tags || []);
@@ -67,8 +119,7 @@ export const PostRecipePage = () => {
     setSaving(true);
     try {
       const recipe = {
-        user_id: user.id,
-        username: user.username,
+        user_id: user.id, username: user.username,
         title, description,
         ingredients: ingredients.filter(i => i.trim()),
         steps: steps.filter(s => s.trim()),
@@ -80,7 +131,7 @@ export const PostRecipePage = () => {
       };
       if (id) recipe.id = id;
       await recipeService.saveRecipe(recipe);
-      toast.success(isDraft ? 'Saved to drafts!' : id ? 'Recipe updated!' : 'Recipe published!');
+      toast.success(isDraft ? 'Saved to drafts!' : id ? 'Recipe updated!' : 'Recipe published! 🎉');
       navigate(isDraft ? '/drafts' : '/');
     } catch (err) {
       toast.error('Could not save recipe');
@@ -89,173 +140,245 @@ export const PostRecipePage = () => {
     }
   };
 
-  const Section = ({ title: t, children }) => (
-    <div style={{ background: '#1C1612', border: '1px solid rgba(245,237,216,0.05)', borderRadius: 20, padding: 28, marginBottom: 20 }}>
-      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 22, color: '#F5EDD8', margin: '0 0 24px' }}>{t}</h2>
-      {children}
-    </div>
-  );
-
-  const Label = ({ children }) => (
-    <label style={{ display: 'block', fontSize: 11, color: 'rgba(245,237,216,0.35)', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 8 }}>{children}</label>
-  );
+  const focusInput = (e) => {
+    e.target.style.borderColor = '#F97316';
+    e.target.style.boxShadow = '0 0 0 3px rgba(249,115,22,0.12)';
+  };
+  const blurInput = (e) => {
+    e.target.style.borderColor = '#FED7AA';
+    e.target.style.boxShadow = 'none';
+  };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0D0A07', padding: '48px 24px' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <p style={{ fontSize: 11, color: '#E8832A', letterSpacing: 3, textTransform: 'uppercase', fontWeight: 600, marginBottom: 12 }}>{id ? 'Edit' : 'Create'}</p>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 48, color: '#F5EDD8', margin: 0 }}>{id ? 'Edit Recipe' : 'Share Your Recipe'}</h1>
-        </div>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #FFF7ED 0%, #FFFBF7 40%, #FFF1E6 100%)' }}>
 
-        {/* General info */}
-        <Section title="General Information">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Hero header */}
+      <div style={{
+        background: 'linear-gradient(135deg, #EA580C 0%, #F97316 50%, #FB923C 100%)',
+        padding: '56px 24px 48px',
+        textAlign: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.2)', borderRadius: 99, padding: '6px 16px', marginBottom: 16 }}>
+            <Sparkles size={14} color="white" />
+            <span style={{ color: 'white', fontSize: 12, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase' }}>{id ? 'Edit Recipe' : 'New Recipe'}</span>
+          </div>
+          <h1 style={{
+            fontFamily: "'Fraunces', Georgia, serif",
+            fontSize: 'clamp(32px, 6vw, 52px)',
+            color: 'white', margin: '0 0 12px',
+            fontWeight: 300, letterSpacing: -1,
+          }}>
+            {id ? 'Edit Your Recipe' : 'Share Your Secret'}
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, maxWidth: 400, margin: '0 auto' }}>
+            {id ? 'Update your culinary masterpiece.' : 'Write it down and inspire the world to cook.'}
+          </p>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px 80px' }}>
+
+        <Section title="General Information" icon="🍽️">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div>
               <Label>Recipe Title *</Label>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Grandma's Famous Lasagna" style={inputStyle}
-                onFocus={e => e.target.style.borderColor = 'rgba(232,131,42,0.5)'}
-                onBlur={e => e.target.style.borderColor = 'rgba(245,237,216,0.08)'}
+              <input
+                value={title} onChange={e => setTitle(e.target.value)}
+                placeholder="e.g. Grandma's Famous Lasagna"
+                style={{ ...inputStyle, fontSize: 16, fontWeight: 500 }}
+                onFocus={focusInput} onBlur={blurInput}
               />
             </div>
             <div>
               <Label>Description *</Label>
-              <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What makes this recipe special?" rows={3} style={{ ...inputStyle, resize: 'none' }}
-                onFocus={e => e.target.style.borderColor = 'rgba(232,131,42,0.5)'}
-                onBlur={e => e.target.style.borderColor = 'rgba(245,237,216,0.08)'}
+              <textarea
+                value={description} onChange={e => setDescription(e.target.value)}
+                placeholder="What makes this recipe special? Tell the story…"
+                rows={3}
+                style={{ ...inputStyle, resize: 'none', lineHeight: 1.6 }}
+                onFocus={focusInput} onBlur={blurInput}
               />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <Label>Country of Origin</Label>
                 <div style={{ position: 'relative' }}>
-                  <MapPin size={13} color="#E8832A" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                  <input value={country} onChange={e => setCountry(e.target.value)} placeholder="Italy, Japan…" style={{ ...inputStyle, paddingLeft: 36 }} />
+                  <MapPin size={14} color="#F97316" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                  <input
+                    value={country} onChange={e => setCountry(e.target.value)}
+                    placeholder="Italy, Japan…"
+                    style={{ ...inputStyle, paddingLeft: 36 }}
+                    onFocus={focusInput} onBlur={blurInput}
+                  />
                 </div>
               </div>
               <div>
                 <Label>Category</Label>
                 <select value={category} onChange={e => setCategory(e.target.value)} style={selectStyle}>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
           </div>
         </Section>
 
-        {/* Details */}
-        <Section title="Recipe Details">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        <Section title="Recipe Details" icon="⚙️">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
             {[
-              { icon: Clock, label: 'Time (min)', value: cookTime, setter: setCookTime, type: 'number' },
-              { icon: Users, label: 'Servings', value: servings, setter: setServings, type: 'number' },
-            ].map(({ icon: Icon, label, value, setter, type }) => (
+              { icon: Clock, label: 'Time (min)', value: cookTime, setter: setCookTime },
+              { icon: Users, label: 'Servings', value: servings, setter: setServings },
+            ].map(({ icon: Icon, label, value, setter }) => (
               <div key={label}>
-                <Label><Icon size={11} color="#E8832A" style={{ display: 'inline', marginRight: 4 }} />{label}</Label>
-                <input type={type} value={value} onChange={e => setter(Number(e.target.value))} style={inputStyle} />
+                <Label><Icon size={10} style={{ display: 'inline', marginRight: 4 }} />{label}</Label>
+                <input
+                  type="number" value={value}
+                  onChange={e => setter(Number(e.target.value))}
+                  style={{ ...inputStyle, textAlign: 'center', fontWeight: 600, fontSize: 16 }}
+                  onFocus={focusInput} onBlur={blurInput}
+                />
               </div>
             ))}
             <div>
-              <Label><BarChart2 size={11} color="#E8832A" style={{ display: 'inline', marginRight: 4 }} />Difficulty</Label>
+              <Label><BarChart2 size={10} style={{ display: 'inline', marginRight: 4 }} />Difficulty</Label>
               <select value={difficulty} onChange={e => setDifficulty(e.target.value)} style={selectStyle}>
-                {difficulties.map(d => <option key={d} value={d}>{d}</option>)}
+                {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div>
-              <Label><DollarSign size={11} color="#E8832A" style={{ display: 'inline', marginRight: 4 }} />Cost</Label>
+              <Label><DollarSign size={10} style={{ display: 'inline', marginRight: 4 }} />Cost</Label>
               <select value={cost} onChange={e => setCost(e.target.value)} style={selectStyle}>
-                {costs.map(c => <option key={c} value={c}>{c}</option>)}
+                {COSTS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
           <div>
             <Label>Dietary Tags</Label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
               {DIETARY.map(tag => {
                 const active = dietaryTags.includes(tag);
                 return (
-                  <button key={tag} type="button" onClick={() => setDietaryTags(active ? dietaryTags.filter(t => t !== tag) : [...dietaryTags, tag])} style={{
-                    padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 500,
-                    border: `1px solid ${active ? '#E8832A' : 'rgba(245,237,216,0.1)'}`,
-                    background: active ? '#E8832A' : 'transparent',
-                    color: active ? '#0D0A07' : 'rgba(245,237,216,0.4)', cursor: 'pointer', transition: 'all 0.2s',
-                  }}>{tag}</button>
+                  <button key={tag} type="button"
+                    onClick={() => setDietaryTags(active ? dietaryTags.filter(t => t !== tag) : [...dietaryTags, tag])}
+                    style={{
+                      padding: '7px 16px', borderRadius: 99, fontSize: 12, fontWeight: 600,
+                      border: `1.5px solid ${active ? '#F97316' : '#FED7AA'}`,
+                      background: active ? '#FFF7ED' : 'white',
+                      color: active ? '#EA580C' : '#92400E',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      boxShadow: active ? '0 0 0 3px rgba(249,115,22,0.1)' : 'none',
+                    }}>
+                    {active ? '✓ ' : ''}{tag}
+                  </button>
                 );
               })}
             </div>
           </div>
         </Section>
 
-        {/* Ingredients */}
-        <Section title="Ingredients">
+        <Section title="Ingredients" icon="🥗">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
             {ingredients.map((ing, i) => (
-              <div key={i} style={{ display: 'flex', gap: 8 }}>
-                <input value={ing} onChange={e => { const n = [...ingredients]; n[i] = e.target.value; setIngredients(n); }} placeholder={`Ingredient ${i + 1}`} style={{ ...inputStyle, flex: 1 }} />
+              <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #FB923C, #F97316)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ color: 'white', fontSize: 11, fontWeight: 700 }}>{i + 1}</span>
+                </div>
+                <input
+                  value={ing}
+                  onChange={e => { const n = [...ingredients]; n[i] = e.target.value; setIngredients(n); }}
+                  placeholder={`Ingredient ${i + 1}…`}
+                  style={{ ...inputStyle, flex: 1 }}
+                  onFocus={focusInput} onBlur={blurInput}
+                />
                 {ingredients.length > 1 && (
-                  <button type="button" onClick={() => setIngredients(ingredients.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(248,113,113,0.5)', padding: '0 8px' }}>
-                    <Trash2 size={15} />
+                  <button type="button" onClick={() => setIngredients(ingredients.filter((_, j) => j !== i))}
+                    style={{ background: '#FEE2E2', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Trash2 size={13} color="#EF4444" />
                   </button>
                 )}
               </div>
             ))}
           </div>
-          <button type="button" onClick={() => setIngredients([...ingredients, ''])} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#E8832A', fontSize: 13 }}>
-            <Plus size={14} /> Add Ingredient
+          <button type="button" onClick={() => setIngredients([...ingredients, ''])}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FFF7ED', border: '1.5px dashed #FED7AA', borderRadius: 10, padding: '9px 16px', cursor: 'pointer', color: '#EA580C', fontSize: 13, fontWeight: 600, width: '100%', justifyContent: 'center' }}>
+            <Plus size={15} /> Add Ingredient
           </button>
         </Section>
 
-        {/* Steps */}
-        <Section title="Step-by-Step Method">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 14 }}>
+        <Section title="Step-by-Step Method" icon="👨‍🍳">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 14 }}>
             {steps.map((step, i) => (
               <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <span style={{ width: 28, height: 28, borderRadius: '50%', background: '#0D0A07', border: '1px solid rgba(232,131,42,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#E8832A', flexShrink: 0, marginTop: 4 }}>{i + 1}</span>
-                <textarea value={step} onChange={e => { const n = [...steps]; n[i] = e.target.value; setSteps(n); }} placeholder={`Describe step ${i + 1}…`} rows={2} style={{ ...inputStyle, flex: 1, resize: 'none' }} />
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #FFF7ED, #FFEDD5)', border: '1.5px solid #FED7AA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                  <span style={{ fontFamily: "'Fraunces', Georgia, serif", color: '#EA580C', fontWeight: 700, fontSize: 15 }}>{i + 1}</span>
+                </div>
+                <textarea
+                  value={step}
+                  onChange={e => { const n = [...steps]; n[i] = e.target.value; setSteps(n); }}
+                  placeholder={`Describe step ${i + 1}…`}
+                  rows={2}
+                  style={{ ...inputStyle, flex: 1, resize: 'none', lineHeight: 1.6 }}
+                  onFocus={focusInput} onBlur={blurInput}
+                />
                 {steps.length > 1 && (
-                  <button type="button" onClick={() => setSteps(steps.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(248,113,113,0.5)', paddingTop: 8 }}>
-                    <Trash2 size={15} />
+                  <button type="button" onClick={() => setSteps(steps.filter((_, j) => j !== i))}
+                    style={{ background: '#FEE2E2', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 4 }}>
+                    <Trash2 size={13} color="#EF4444" />
                   </button>
                 )}
               </div>
             ))}
           </div>
-          <button type="button" onClick={() => setSteps([...steps, ''])} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#E8832A', fontSize: 13 }}>
-            <Plus size={14} /> Add Step
+          <button type="button" onClick={() => setSteps([...steps, ''])}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FFF7ED', border: '1.5px dashed #FED7AA', borderRadius: 10, padding: '9px 16px', cursor: 'pointer', color: '#EA580C', fontSize: 13, fontWeight: 600, width: '100%', justifyContent: 'center' }}>
+            <Plus size={15} /> Add Step
           </button>
         </Section>
 
-        {/* Photo */}
-        <Section title="Recipe Photo">
-          <div>
-            <Label>Image URL (Optional)</Label>
-            <div style={{ position: 'relative' }}>
-              <Camera size={13} color="#E8832A" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-              <input value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} placeholder="https://images.unsplash.com/…" style={{ ...inputStyle, paddingLeft: 36 }} />
-            </div>
-            {photoUrl && <div style={{ marginTop: 12, borderRadius: 12, overflow: 'hidden', height: 160 }}><img src={photoUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>}
+        <Section title="Recipe Photo" icon="📸">
+          <Label>Image URL (Optional)</Label>
+          <div style={{ position: 'relative' }}>
+            <Camera size={14} color="#F97316" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <input
+              value={photoUrl} onChange={e => setPhotoUrl(e.target.value)}
+              placeholder="https://images.unsplash.com/…"
+              style={{ ...inputStyle, paddingLeft: 36 }}
+              onFocus={focusInput} onBlur={blurInput}
+            />
           </div>
+          {photoUrl ? (
+            <div style={{ marginTop: 14, borderRadius: 16, overflow: 'hidden', height: 180, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+              <img src={photoUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          ) : (
+            <div style={{ marginTop: 14, borderRadius: 16, height: 120, background: 'linear-gradient(135deg, #FFF7ED, #FFEDD5)', border: '2px dashed #FED7AA', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <Camera size={28} color="#FED7AA" />
+              <span style={{ color: '#FCA572', fontSize: 13 }}>Paste an image URL above to preview</span>
+            </div>
+          )}
         </Section>
 
-        {/* Submit */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 8 }}>
-          <button type="button" onClick={() => handleSubmit(true)} disabled={saving} style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px',
-            border: '1px solid rgba(245,237,216,0.1)', borderRadius: 99, background: 'transparent',
-            color: 'rgba(245,237,216,0.5)', cursor: 'pointer', fontSize: 13,
-          }}>
-            <Save size={14} /> Save Draft
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 8 }}>
+          <button type="button" onClick={() => handleSubmit(true)} disabled={saving}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 24px', border: '1.5px solid #FED7AA', borderRadius: 14, background: 'white', color: '#92400E', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+            <Save size={15} /> Save Draft
           </button>
-          <button type="button" onClick={() => handleSubmit(false)} disabled={saving} style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '12px 28px',
-            background: '#E8832A', border: 'none', borderRadius: 99,
-            color: '#0D0A07', fontWeight: 600, cursor: 'pointer', fontSize: 13,
-            opacity: saving ? 0.7 : 1,
-          }}>
-            {saving ? 'Saving…' : <>{id ? 'Update' : 'Publish'} Recipe <ChevronRight size={15} /></>}
+          <button type="button" onClick={() => handleSubmit(false)} disabled={saving}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '13px 28px', border: 'none', borderRadius: 14, background: saving ? '#FCA572' : 'linear-gradient(135deg, #EA580C, #F97316)', color: 'white', fontWeight: 700, fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(249,115,22,0.35)' }}>
+            {saving ? 'Saving…' : <>{id ? 'Update' : 'Publish'} Recipe <ChevronRight size={16} /></>}
           </button>
         </div>
       </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+        input::placeholder, textarea::placeholder { color: #D4956A; }
+        input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+      `}</style>
     </div>
   );
 };
