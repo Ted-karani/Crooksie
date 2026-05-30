@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { RecipeCard } from '../components/RecipeCard';
 import { recipeService } from '../services/recipeService';
-import { Clock, Flame, Sparkles, ArrowRight } from 'lucide-react';
+import { Clock, Flame, Sparkles, ArrowRight, Search } from 'lucide-react';
 
 const categories = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Desserts'];
+const CAT_EMOJI = { All: '🍽️', Breakfast: '🌅', Lunch: '🥗', Dinner: '🍝', Snacks: '🍿', Desserts: '🍰' };
 
 export const HomePage = () => {
   const [recipes, setRecipes] = useState([]);
@@ -13,138 +14,135 @@ export const HomePage = () => {
   const [sortBy, setSortBy] = useState('Newest');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadRecipes();
-  }, [activeCategory, sortBy]);
+  useEffect(() => { loadRecipes(); }, [activeCategory, sortBy]);
 
   const loadRecipes = async () => {
     setLoading(true);
     try {
       const data = await recipeService.getRecipes({ category: activeCategory, sortBy });
       setRecipes(data);
-      if (!featured && data.length > 0) {
-        const top = [...data].sort((a, b) => b.like_count - a.like_count)[0];
-        setFeatured(top);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+      if (!featured && data.length > 0) setFeatured([...data].sort((a, b) => b.like_count - a.like_count)[0]);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0D0A07' }}>
-      {/* Hero */}
-      {featured && (
-        <section style={{ position: 'relative', height: '85vh', minHeight: 500, display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
-          <img src={featured.photo_url} alt={featured.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0D0A07 0%, rgba(13,10,7,0.6) 50%, transparent 100%)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(13,10,7,0.5), transparent)' }} />
+    <div style={{ minHeight: '100vh', background: '#FFFBF7' }}>
 
-          <div style={{ position: 'relative', zIndex: 10, maxWidth: 1280, margin: '0 auto', padding: '0 24px 64px', width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-              <div style={{ height: 1, width: 32, background: '#E8832A' }} />
-              <span style={{ fontSize: 11, color: '#E8832A', fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase' }}>Featured Recipe</span>
+      {/* HERO */}
+      {featured && (
+        <section style={{ position: 'relative', minHeight: '88vh', display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
+          <img src={featured.photo_url} alt={featured.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,10,0,0.85) 0%, rgba(28,10,0,0.4) 50%, transparent 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(28,10,0,0.5), transparent 60%)' }} />
+
+          {/* Floating pill */}
+          <div style={{ position: 'absolute', top: 32, left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 99, padding: '8px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Sparkles size={14} color="#FEF08A" />
+            <span style={{ color: 'white', fontSize: 12, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase' }}>Featured Today</span>
+          </div>
+
+          <div style={{ position: 'relative', zIndex: 10, maxWidth: 1280, margin: '0 auto', padding: '0 28px 72px', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{ height: 2, width: 40, background: '#FB923C', borderRadius: 1 }} />
+              <span style={{ fontSize: 12, color: '#FB923C', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' }}>Most Loved Recipe</span>
             </div>
-            <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(40px, 8vw, 80px)', color: '#F5EDD8', margin: '0 0 16px', lineHeight: 1, maxWidth: 800 }}>
+            <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 'clamp(42px, 8vw, 84px)', color: 'white', margin: '0 0 16px', lineHeight: 1, maxWidth: 900, fontWeight: 300 }}>
               {featured.title}
             </h1>
-            <p style={{ color: 'rgba(245,237,216,0.55)', fontSize: 16, maxWidth: 480, marginBottom: 32, lineHeight: 1.7 }}>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 17, maxWidth: 500, marginBottom: 32, lineHeight: 1.7 }}>
               {featured.description}
             </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
               <Link to={`/recipe/${featured.id}`} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: '#E8832A', color: '#0D0A07', fontWeight: 600,
-                padding: '12px 28px', borderRadius: 99, textDecoration: 'none', fontSize: 14,
+                background: 'linear-gradient(135deg, #EA580C, #F97316)', color: 'white',
+                fontWeight: 700, padding: '14px 32px', borderRadius: 99, textDecoration: 'none',
+                fontSize: 15, boxShadow: '0 6px 24px rgba(249,115,22,0.4)',
               }}>
-                View Recipe <ArrowRight size={16} />
+                Cook This <ArrowRight size={16} />
               </Link>
-              <div style={{ display: 'flex', gap: 20, fontSize: 13, color: 'rgba(245,237,216,0.4)' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Clock size={13} color="#E8832A" />{featured.cook_time}m</span>
-                <span>{featured.country}</span>
-                <span>❤ {featured.like_count}</span>
+              <div style={{ display: 'flex', gap: 16, fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+                <span>🕐 {featured.cook_time} mins</span>
+                <span>🌍 {featured.country}</span>
+                <span>❤️ {featured.like_count}</span>
               </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* Main */}
+      {/* MAIN */}
       <main style={{ maxWidth: 1280, margin: '0 auto', padding: '64px 24px' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 40 }}>
+
+        {/* Section header */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 36 }}>
           <div>
-            <p style={{ fontSize: 11, color: '#E8832A', letterSpacing: 3, textTransform: 'uppercase', fontWeight: 600, marginBottom: 8 }}>Explore</p>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 36, color: '#F5EDD8', margin: 0 }}>All Recipes</h2>
+            <p style={{ fontSize: 12, color: '#F97316', letterSpacing: 3, textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>🍴 Explore</p>
+            <h2 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 40, color: '#1C0A00', fontWeight: 400 }}>All Recipes</h2>
           </div>
           {/* Sort */}
-          <div style={{ display: 'flex', background: '#1C1612', border: '1px solid rgba(245,237,216,0.05)', borderRadius: 99, padding: 4, gap: 2 }}>
-            {[{ label: 'Newest', Icon: Clock }, { label: 'Most Liked', Icon: Sparkles }, { label: 'Trending', Icon: Flame }].map(({ label, Icon }) => (
+          <div style={{ display: 'flex', background: 'white', border: '1.5px solid #FED7AA', borderRadius: 99, padding: 4, gap: 2, boxShadow: '0 2px 8px rgba(249,115,22,0.08)' }}>
+            {[{ label: 'Newest', icon: '🕐' }, { label: 'Most Liked', icon: '✨' }, { label: 'Trending', icon: '🔥' }].map(({ label, icon }) => (
               <button key={label} onClick={() => setSortBy(label)} style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 99,
-                border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, transition: 'all 0.2s',
-                background: sortBy === label ? '#E8832A' : 'transparent',
-                color: sortBy === label ? '#0D0A07' : 'rgba(245,237,216,0.4)',
+                display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 99,
+                border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.2s',
+                background: sortBy === label ? 'linear-gradient(135deg, #EA580C, #F97316)' : 'transparent',
+                color: sortBy === label ? 'white' : '#92400E',
+                boxShadow: sortBy === label ? '0 3px 10px rgba(249,115,22,0.3)' : 'none',
               }}>
-                <Icon size={12} />{label}
+                {icon} {label}
               </button>
             ))}
           </div>
         </div>
 
         {/* Category tabs */}
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, marginBottom: 40 }}>
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, marginBottom: 40 }}>
           {categories.map(cat => (
             <button key={cat} onClick={() => setActiveCategory(cat)} style={{
-              whiteSpace: 'nowrap', padding: '8px 20px', borderRadius: 99, fontSize: 13,
-              fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s', border: '1px solid',
-              borderColor: activeCategory === cat ? '#E8832A' : 'rgba(245,237,216,0.1)',
-              background: activeCategory === cat ? '#E8832A' : 'transparent',
-              color: activeCategory === cat ? '#0D0A07' : 'rgba(245,237,216,0.5)',
+              display: 'flex', alignItems: 'center', gap: 6,
+              whiteSpace: 'nowrap', padding: '10px 20px', borderRadius: 99, fontSize: 13,
+              fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+              border: activeCategory === cat ? 'none' : '1.5px solid #FED7AA',
+              background: activeCategory === cat ? 'linear-gradient(135deg, #EA580C, #F97316)' : 'white',
+              color: activeCategory === cat ? 'white' : '#92400E',
+              boxShadow: activeCategory === cat ? '0 4px 14px rgba(249,115,22,0.3)' : '0 1px 4px rgba(0,0,0,0.05)',
             }}>
-              {cat}
+              {CAT_EMOJI[cat]} {cat}
             </button>
           ))}
         </div>
 
         {/* Grid */}
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
             {[1,2,3,4,5,6].map(i => (
-              <div key={i} style={{ borderRadius: 16, overflow: 'hidden', background: '#1C1612' }}>
-                <div style={{ aspectRatio: '4/3', background: 'linear-gradient(90deg, #1C1612 25%, #2E2620 50%, #1C1612 75%)', backgroundSize: '1000px 100%', animation: 'shimmer 2s infinite' }} />
-                <div style={{ padding: 20 }}>
-                  <div style={{ height: 20, background: '#2E2620', borderRadius: 4, marginBottom: 10 }} />
-                  <div style={{ height: 14, background: '#2E2620', borderRadius: 4, width: '70%' }} />
+              <div key={i} style={{ borderRadius: 20, overflow: 'hidden', background: 'white', border: '1.5px solid #FEF3C7' }}>
+                <div style={{ aspectRatio: '4/3', background: 'linear-gradient(90deg, #FFF7ED 25%, #FFEDD5 50%, #FFF7ED 75%)', backgroundSize: '1000px 100%', animation: 'shimmer 2s infinite' }} />
+                <div style={{ padding: 18 }}>
+                  <div style={{ height: 20, background: '#FEF3C7', borderRadius: 6, marginBottom: 10 }} />
+                  <div style={{ height: 14, background: '#FEF3C7', borderRadius: 6, width: '70%' }} />
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
             {recipes.map(r => <RecipeCard key={r.id} recipe={r} />)}
           </div>
         )}
 
         {!loading && recipes.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
-            <p style={{ fontSize: 48, marginBottom: 16 }}>🍽</p>
-            <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 24, color: 'rgba(245,237,216,0.3)', marginBottom: 12 }}>No recipes found</h3>
-            <button onClick={() => setActiveCategory('All')} style={{ background: 'none', border: 'none', color: '#E8832A', cursor: 'pointer', fontSize: 14 }}>
-              Clear filter
+            <p style={{ fontSize: 56, marginBottom: 16 }}>🍽️</p>
+            <h3 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 28, color: '#92400E', marginBottom: 12 }}>No recipes found</h3>
+            <button onClick={() => setActiveCategory('All')} style={{ background: 'linear-gradient(135deg, #EA580C, #F97316)', color: 'white', border: 'none', borderRadius: 99, padding: '10px 24px', cursor: 'pointer', fontWeight: 600 }}>
+              Show all recipes
             </button>
           </div>
         )}
       </main>
-
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: -1000px 0; }
-          100% { background-position: 1000px 0; }
-        }
-      `}</style>
     </div>
   );
 };

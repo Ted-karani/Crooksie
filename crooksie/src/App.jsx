@@ -18,7 +18,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div style={{ minHeight: '100vh', background: '#0D0A07', color: '#F5EDD8' }}>
+        <div style={{ minHeight: '100vh', background: '#FFFBF7', color: '#1C0A00' }}>
           <Navbar />
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -38,10 +38,11 @@ function App() {
             position="bottom-center"
             toastOptions={{
               style: {
-                background: '#1C1612',
-                color: '#F5EDD8',
-                border: '1px solid rgba(232,131,42,0.2)',
+                background: 'white',
+                color: '#1C0A00',
+                border: '1.5px solid #FED7AA',
                 fontFamily: 'DM Sans, sans-serif',
+                boxShadow: '0 8px 32px rgba(249,115,22,0.15)',
               },
             }}
           />
